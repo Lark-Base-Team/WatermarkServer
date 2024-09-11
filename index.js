@@ -28,7 +28,6 @@ function saveBuffer(name, dataBuffer) {
 
 app.get('/addWatermark', async ({ query }, res) => {
   try {
-
     const { time, text, url } = query
     const dayjsObj = dayjs(new Date(Number(time)))
     const date = dayjsObj.format('YYYY-MM-DD')
