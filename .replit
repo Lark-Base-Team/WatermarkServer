@@ -1,26 +1,17 @@
-run = "nix-shell build.nix" # DO NOT CHANGE
 entrypoint = "index.js"
+modules = ["nodejs-20"]
+hidden = [".config", "package-lock.json"]
 
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix", "package.json", "package-lock.json"]
+
+[nix]
+channel = "stable-24_05"
+
+[unitTest]
 language = "nodejs"
-
-[packager]
-language = "nodejs"
-
-[packager.features]
-packageSearch = true
-guessImports = true
-
-[languages.nodejs]
-pattern = "**/*.js"
-syntax = "nodejs"
-
-[languages.nodejs.languageServer]
-start = [ "typescript-language-server", "--stdio" ]
-
-[[ports]]
-localPort = 3000
-externalPort = 80
 
 [deployment]
-run = ["nix-shell", "build.nix"]
-deploymentTarget = "gce"
+run = ["node", "index.js"]
+deploymentTarget = "cloudrun"
+ignorePorts = false
