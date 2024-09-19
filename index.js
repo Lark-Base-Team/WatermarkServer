@@ -10,11 +10,11 @@ if (!fs.existsSync('./out')) fs.mkdirSync('./out');
 const app = express()
 const port = 3000
 
-const dayStr = { 
+const dayStr = {
   0: '星期日',
   1: '星期一',
-  2: '星期二', 
-  3: '星期三', 
+  2: '星期二',
+  3: '星期三',
   4: '星期四',
   5: '星期五',
   6: '星期六'
@@ -53,6 +53,20 @@ app.get('/addWatermark', async ({ query }, res) => {
     // 背景原图
     ctx.drawImage(image, 0, 0, width, height)
 
+    // 计算文字width
+    ctx.font = size1 + 'px MiSans'
+    const clockWidth = ctx.measureText(clock).width
+    ctx.font = size2 + 'px MiSans'
+    const dateWidth = ctx.measureText(date).width
+    const textWidth = ctx.measureText(text).width
+
+    // 半透明文字背景
+    ctx.fillStyle = 'rgba(0,0,0,0.5)'
+    let bgWidth = Math.max(clockWidth + size3 + size4 + size3 + dateWidth + margin + margin, textWidth + margin + margin)
+    let bgHeight = size2 + size1 + margin + margin
+    ctx.fillRect(0, height - bgHeight, bgWidth, bgHeight)
+    ctx.fillStyle = '#ffffff'
+
     // 额外文字
     ctx.font = size2 + 'px MiSans'
     ctx.fillText(text, margin, height - size2 - margin, width - margin * 2)
@@ -63,7 +77,6 @@ app.get('/addWatermark', async ({ query }, res) => {
 
     // 时间日期分割线
     ctx.fillStyle = '#f1cc48'
-    const clockWidth = ctx.measureText(clock).width
     ctx.rect(margin + clockWidth + size3, height - size2 - size1 - margin, size4, size1 - size4)
     ctx.fill()
     ctx.fillStyle = '#ffffff'
