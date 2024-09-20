@@ -28,8 +28,9 @@ function saveBuffer(name, dataBuffer) {
 
 app.get('/addWatermark', async ({ query }, res) => {
   try {
-    const { time, text, url } = query
+    const { time, text, url, direction } = query
     const dayjsObj = dayjs(new Date(Number(time)))
+    const showDate = Boolean(time != '@NULL@')
     const date = dayjsObj.format('YYYY-MM-DD')
     const clock = dayjsObj.format('HH:mm')
     const day = dayStr[dayjsObj.day()]
@@ -53,44 +54,91 @@ app.get('/addWatermark', async ({ query }, res) => {
     // 背景原图
     ctx.drawImage(image, 0, 0, width, height)
 
-    // 计算文字width
-    ctx.font = size1 + 'px MiSans'
-    const clockWidth = ctx.measureText(clock).width
-    ctx.font = size2 + 'px MiSans'
-    const dateWidth = ctx.measureText(date).width
-    const textWidth = ctx.measureText(text).width
+    if (direction == 'cover') {
+      // 背景覆盖
+      const rotate = 30
+      const gapX = size2
+      const gapY = size1
+      const fontSize = size2
+      const coverText = text + ' ' + (showDate ? date : '')
+      ctx.drawImage(image, 0, 0, width, height)
+      ctx.save()
+      ctx.rotate(rotate * Math.PI / 180)
+      const rotatedWidth = width * Math.cos(rotate * Math.PI / 180) + height * Math.sin(rotate * Math.PI / 180)
+      const rotatedHeight = height * Math.cos(rotate * Math.PI / 180) + width * Math.sin(rotate * Math.PI / 180)
+      ctx.fillStyle = 'rgba(66,66,66,0.1)'
+      ctx.font = size2 + 'px MiSans'
+      for (let y = -Math.sin(rotate * Math.PI / 180) * width; y < rotatedHeight; y += gapY + fontSize) {
+        for (let x = (y / rotatedHeight) * ctx.measureText(coverText).width; x < rotatedWidth; x += gapX + ctx.measureText(coverText).width) {
+          ctx.fillText(coverText, x, y)
+        }
+      }
+      ctx.restore()
 
-    // 半透明文字背景
-    ctx.fillStyle = 'rgba(0,0,0,0.5)'
-    let bgWidth = Math.max(clockWidth + size3 + size4 + size3 + dateWidth + margin + margin, textWidth + margin + margin)
-    let bgHeight = size2 + size1 + margin + margin
-    ctx.fillRect(0, height - bgHeight, bgWidth, bgHeight)
-    ctx.fillStyle = '#ffffff'
 
-    // 额外文字
-    ctx.font = size2 + 'px MiSans'
-    ctx.fillText(text, margin, height - size2 - margin, width - margin * 2)
+    } else {
+      // 计算文字width
+      ctx.font = size1 + 'px MiSans'
+      const clockWidth = ctx.measureText(clock).width
+      ctx.font = size2 + 'px MiSans'
+      const dateWidth = ctx.measureText(date).width
+      const textWidth = ctx.measureText(text).width
 
-    // 时间
-    ctx.font = size1 + 'px MiSans'
-    ctx.fillText(clock, margin, height - size2 - size3 - size1 - margin - size4)
+      const globalOffsetMap = { leftBottom: { x: { multiple: 0, addition: 0 }, y: { multiple: -1, addition: height } }, leftTop: { x: { multiple: 0, addition: 0 }, y: { multiple: 0, addition: 0 } }, rightBottom: { x: { multiple: -1, addition: width }, y: { multiple: -1, addition: height } }, rightTop: { x: { multiple: -1, addition: width }, y: { multiple: 0, addition: 0 } } }
 
-    // 时间日期分割线
-    ctx.fillStyle = '#f1cc48'
-    ctx.rect(margin + clockWidth + size3, height - size2 - size1 - margin, size4, size1 - size4)
-    ctx.fill()
-    ctx.fillStyle = '#ffffff'
+      if (showDate) {  // 显示日期
 
-    // 日期
-    ctx.font = size2 + 'px MiSans'
-    ctx.fillText(date, margin + clockWidth + size3 + size4 + size3, height - size2 - size3 - size1 - margin + size3 + size4)
+        // 半透明文字背景
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'
+        let bgWidth = Math.max(clockWidth + size3 + size4 + size3 + dateWidth + margin + margin, textWidth + margin + margin)
+        let bgHeight = size2 + size1 + margin + margin
+        const t = globalOffsetMap[direction]
+        const globalOffsetX = t.x.multiple * bgWidth + t.x.addition
+        const globalOffsetY = t.y.multiple * bgHeight + t.y.addition
+        ctx.fillRect(globalOffsetX, globalOffsetY, bgWidth, bgHeight)
+        ctx.fillStyle = '#ffffff'
 
-    // 星期
-    ctx.fillText(day, margin + clockWidth + size3 + size4 + size3, height - size2 - size3 - margin - size2 - size4 - size4)
+        // 额外文字
+        ctx.font = size2 + 'px MiSans'
+        ctx.fillText(text, globalOffsetX + margin, globalOffsetY + bgHeight - size2 - margin, width - margin * 2)
+
+        // 时间
+        ctx.font = size1 + 'px MiSans'
+        ctx.fillText(clock, globalOffsetX + margin, globalOffsetY + bgHeight - size2 - size3 - size1 - margin - size4)
+
+        // 时间日期分割线
+        ctx.fillStyle = '#f1cc48'
+        ctx.rect(globalOffsetX + margin + clockWidth + size3, globalOffsetY + bgHeight - size2 - size1 - margin, size4, size1 - size4)
+        ctx.fill()
+        ctx.fillStyle = '#ffffff'
+
+        // 日期
+        ctx.font = size2 + 'px MiSans'
+        ctx.fillText(date, globalOffsetX + margin + clockWidth + size3 + size4 + size3, globalOffsetY + bgHeight - size2 - size3 - size1 - margin + size3 + size4)
+
+        // 星期
+        ctx.fillText(day, globalOffsetX + margin + clockWidth + size3 + size4 + size3, globalOffsetY + bgHeight - size2 - size3 - margin - size2 - size4 - size4)
+      } else { // 不显示日期，纯文本
+
+        // 半透明文字背景
+        ctx.fillStyle = 'rgba(0,0,0,0.5)'
+        let bgWidth = textWidth + margin + margin
+        let bgHeight = size2 + margin + margin
+        const t = globalOffsetMap[direction]
+        const globalOffsetX = t.x.multiple * bgWidth + t.x.addition
+        const globalOffsetY = t.y.multiple * bgHeight + t.y.addition
+        ctx.fillRect(globalOffsetX, globalOffsetY, bgWidth, bgHeight)
+        ctx.fillStyle = '#ffffff'
+
+        // 额外文字
+        ctx.font = size2 + 'px MiSans'
+        ctx.fillText(text, globalOffsetX + margin, globalOffsetY + bgHeight - size2 - margin, width - margin * 2)
+      }
+    }
 
     // 保存并返回文件名
     saveBuffer(fileName, canvas.toBuffer())
-    res.send({ fileName, 'suc': true })
+    res.send({ fileName, 'suc': true, width, height })
 
   } catch (e) {
     console.log(e);
