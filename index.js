@@ -40,6 +40,7 @@ app.get('/addWatermark', async ({ query }, res) => {
     const vmin = Math.min(width, height)
     const canvas = createCanvas(width, height)
     const ctx = canvas.getContext('2d')
+    const size0 = vmin * 0.16
     const size1 = vmin * 0.1
     const size2 = vmin * 0.03
     const size3 = vmin * 0.015
@@ -66,7 +67,7 @@ app.get('/addWatermark', async ({ query }, res) => {
       ctx.rotate(rotate * Math.PI / 180)
       const rotatedWidth = width * Math.cos(rotate * Math.PI / 180) + height * Math.sin(rotate * Math.PI / 180)
       const rotatedHeight = height * Math.cos(rotate * Math.PI / 180) + width * Math.sin(rotate * Math.PI / 180)
-      ctx.fillStyle = 'rgba(66,66,66,0.1)'
+      ctx.fillStyle = 'rgba(88,88,88,0.16)'
       ctx.font = size2 + 'px MiSans'
       for (let y = -Math.sin(rotate * Math.PI / 180) * width; y < rotatedHeight; y += gapY + fontSize) {
         for (let x = (y / rotatedHeight) * ctx.measureText(coverText).width; x < rotatedWidth; x += gapX + ctx.measureText(coverText).width) {
@@ -75,6 +76,28 @@ app.get('/addWatermark', async ({ query }, res) => {
       }
       ctx.restore()
 
+
+    } else if (direction == 'center') {
+      // 文字居中
+      if (showDate) {
+        ctx.fillStyle = '#ffffff'
+        ctx.font = size0 + 'px MiSans'
+        ctx.fillStyle = 'rgba(12,12,12,0.7)'
+        ctx.fillText(clock, (width * 0.5 - ctx.measureText(clock).width / 2) + size4, (height * 0.6 - size0 / 2) + size4)
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText(clock, width * 0.5 - ctx.measureText(clock).width / 2, height * 0.6 - size0 / 2)
+        ctx.font = size0 * 0.3 + 'px MiSans'
+        ctx.fillStyle = 'rgba(12,12,12,0.7)'
+        ctx.fillText(`${date} ${day} | ${text}`, (width * 0.5 - ctx.measureText(`${date} ${day} | ${text}`).width / 2) + size4 / 2, (height * 0.8 - size1 / 2) + size4 / 3)
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText(`${date} ${day} | ${text}`, width * 0.5 - ctx.measureText(`${date} ${day} | ${text}`).width / 2, height * 0.8 - size1 / 2)
+      } else {
+        ctx.font = size0 * 0.3 + 'px MiSans'
+        ctx.fillStyle = 'rgba(12,12,12,0.7)'
+        ctx.fillText(text, (width * 0.5 - ctx.measureText(text).width / 2) + size4 / 2, (height * 0.8 - size1 / 2) + size4 / 3)
+        ctx.fillStyle = '#ffffff'
+        ctx.fillText(text, width * 0.5 - ctx.measureText(text).width / 2, height * 0.8 - size1 / 2)
+      }
 
     } else {
       // 计算文字width
