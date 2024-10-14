@@ -35,6 +35,7 @@ app.get('/addWatermark', async ({ query }, res) => {
     const clock = dayjsObj.format('HH:mm')
     const day = dayStr[dayjsObj.day()]
     const image = await loadImage(url)
+    const suffix = (url.endsWith('.jpg') || url.endsWith('.jpeg')) ? '.jpg' : '.png'
     const width = image.width
     const height = image.height
     const vmin = Math.min(width, height)
@@ -45,7 +46,7 @@ app.get('/addWatermark', async ({ query }, res) => {
     const size2 = vmin * 0.03
     const size3 = vmin * 0.015
     const size4 = vmin * 0.005
-    const fileName = uuid() + '.png'
+    const fileName = uuid() + suffix
 
     // 通用配置
     ctx.fillStyle = '#ffffff'
