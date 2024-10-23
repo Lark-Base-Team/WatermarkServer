@@ -161,7 +161,7 @@ app.get('/addWatermark', async ({ query }, res) => {
     }
 
     // 保存并返回文件名
-    saveBuffer(fileName, canvas.toBuffer())
+    saveBuffer(fileName, canvas.toBuffer('image/' + suffix.replace(".", '')))
     res.send({ fileName, 'suc': true, width, height })
 
   } catch (e) {
